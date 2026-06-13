@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TEXTURE INSTRUMENT TEST</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: monospace;
+        }
+        body {
+            margin: 20px;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        h2 {
+            margin: 0 0 10px 0;
+            font-weight: normal;
+        }
+        hr {
+            border: none;
+            border-top: 1px dashed #ffffff;
+            margin: 20px 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select, input[type="range"], button {
+            width: 100%;
+            border: 1px solid #ffffff;
+            padding: 5px;
+            background: #000000;
+            color: #ffffff;
+            font-family: monospace;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 15px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 15px;
+            background: #ffffff;
+            cursor: pointer;
+            border: 1px solid #000000;
+        }
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 10px;
+        }
+        button:active {
+            background: #ffffff;
+            color: #000000;
+        }
+        .hidden-panel {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ffffff;
+        }
+        .visualizer-box {
+            background: #000000;
+            border: 1px solid #ffffff;
+            padding: 10px;
+            margin: 20px 0;
+            position: relative;
+        }
+        span.value-display {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>TEXTURE INSTRUMENT TEST</h2>
+    
+    <div>STATUS: <span id="status-text">Awaiting Initialization...</span></div>
+    <button id="start-btn">[ INITIALIZE ]</button>
+    
+    <div id="interface" style="display:none;">
+        <div class="grid">
+            <div>
+                <div class="control-group">
+                    <label for="scale-type">Target Scale:</label>
+                    <select id="scale-type">
+                        <option value="pentatonic">Minor Pentatonic</option>
+                        <option value="major">Major Scale</option>
+                        <option value="chromatic">Chromatic Scale</option>
+                        <option value="whole">Whole Tone (Dreamy/Eerie)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="mel-wave">Melody Waveform:</label>
+                    <select id="mel-wave">
+                        <option value="sine">Sine</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="sawtooth">Sawtooth</option>
+                        <option value="square">Square</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="wave-type">Grit Waveform:</label>
+                    <select id="wave-type">
+                        <option value="sawtooth">Sawtooth</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="pitch-ctrl">Base Pitch (Hz): <span class="value-display" id="pitch-val">110</span></label>
+                    <input type="range" id="pitch-ctrl" min="40" max="440" value="110" step="1">
+                </div>
+            </div>
+
+            <div>
+                <div class="control-group">
+                    <label for="sens-ctrl">Input Sensitivity: <span class="value-display" id="sens-val">2.5x</span></label>
+                    <input type="range" id="sens-ctrl" min="1" max="10" value="2.5" step="0.5">
+                </div>
+
+                <div class="control-group">
+                    <label for="curve-ctrl">Surface Curve (Exp): <span class="value-display" id="curve-val">3.0x</span></label>
+                    <input type="range" id="curve-ctrl" min="1" max="5" value="3" step="0.5">
+                </div>
+
+                <div class="control-group">
+                    <label for="linger-ctrl">Note Linger Time (Speed): <span class="value-display" id="linger-val">150ms</span></label>
+                    <input type="range" id="linger-ctrl" min="10" max="800" value="150" step="10">
+                </div>
+            </div>
+        </div>
+
+        <div class="visualizer-box">
+            <svg id="viz-svg" width="100%" height="220" style="display:block; overflow:visible; background: #000000;">
+                <g id="note-labels-group"></g>
+                <path id="surface-path" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 2" />
+                <g id="needle-arm-group">
+                    <line id="needle-body" x1="340" y1="110" x2="160" y2="110" stroke="#ffffff" stroke-width="4" />
+                    <line id="needle-cantilever" x1="160" y1="110" x2="80" y2="120" stroke="#ffffff" stroke-width="2" />
+                    <polygon id="needle-diamond" points="80,120 76,110 84,110" fill="#ffffff" stroke="#ffffff" stroke-width="1" />
+                    <circle cx="340" cy="110" r="5" fill="#000000" stroke="#ffffff" stroke-width="2" />
+                </g>
+            </svg>
+        </div>
+
+        <div class="grid">
+            <div>MIDI Value: <span id="cc-val">0</span></div>
+            <div style="text-align: right;">Active Pitch Step: <span id="debug-note">Baseline Tone</span></div>
+        </div>
+
+        <br>
+        <button id="more-btn" type="button">[ MORE SETTINGS ]</button>
+
+        <div id="hidden-section" class="hidden-panel">
+            <div class="grid">
+                <div>
+                    <div class="control-group">
+                        <label for="rate-ctrl">Check-In Rate (Smoothing): <span class="value-display" id="rate-val">5ms</span></label>
+                        <input type="range" id="rate-ctrl" min="1" max="20" value="5" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label for="fm-ctrl">FM Intensity Max: <span class="value-display" id="fm-val">1000</span></label>
+                        <input type="range" id="fm-ctrl" min="0" max="3000" value="1000" step="50">
+                    </div>
+                    <div class="control-group">
+                        <label for="harm-ctrl">Harmonic Multiplier: <span class="value-display" id="harm-val">2.0x</span></label>
+                        <input type="range" id="harm-ctrl" min="1" max="12" value="2" step="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label for="filt-ctrl">Filter Baseline (Hz): <span class="value-display" id="filt-val">150</span></label>
+                        <input type="range" id="filt-ctrl" min="50" max="1000" value="150" step="10">
+                    </div>
+                    <div class="control-group">
+                        <label for="q-ctrl">Filter Sharpness (Q): <span class="value-display" id="q-val">2</span></label>
+                        <input type="range" id="q-ctrl" min="1" max="30" value="2" step="1">
+                    </div>
+                </div>
+                <div>
+                    <div class="control-group">
+                        <label for="melvol-ctrl">Melody Baseline Volume: <span class="value-display" id="melvol-val">30%</span></label>
+                        <input type="range" id="melvol-ctrl" min="0" max="100" value="30">
+                    </div>
+                    <div class="control-group">
+                        <label for="gritvol-ctrl">Grit Max Volume: <span class="value-display" id="gritvol-val">50%</span></label>
+                        <input type="range" id="gritvol-ctrl" min="0" max="100" value="50">
+                    </div>
+                    <div class="control-group">
+                        <label for="bass-ctrl">Bass Gain (dB): <span class="value-display" id="bass-val">0</span></label>
+                        <input type="range" id="bass-ctrl" min="-12" max="12" value="0" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label for="treble-ctrl">Treble Gain (dB): <span class="value-display" id="treble-val">0</span></label>
+                        <input type="range" id="treble-ctrl" min="-12" max="12" value="0" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label for="fmax-ctrl">Max Needle Filter Opening (Hz): <span class="value-display" id="fmax-val">6000</span></label>
+                        <input type="range" id="fmax-ctrl" min="1000" max="8000" value="6000" step="500">
+                    </div>
+                    <div class="control-group">
+                        <label for="qmax-ctrl">Max Needle Q Expansion: <span class="value-display" id="qmax-val">25</span></label>
+                        <input type="range" id="qmax-ctrl" min="0" max="40" value="25" step="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let audioCtx, oscMelody, fmModulator, fmGain, melodyGain;
+let oscTexture, textureFilter, textureGain;
+let bassEQ, trebleEQ, masterVolume;
+
+let baseFrequency = 110;
+let timeConstant = 0.005;
+
+let lastNoteUpdateTime = 0;
+let lastRegisteredStepIndex = -1;
+
+let surfaceDataHistory = [];
+const maxSurfacePoints = 60; 
+let currentYTarget = 205; 
+
+const scales = {
+    pentatonic: [1.0, 1.2, 1.333, 1.5, 1.778, 2.0, 2.4, 2.667, 3.0, 3.556, 4.0],
+    major: [1.0, 1.125, 1.25, 1.333, 1.5, 1.667, 1.875, 2.0, 2.25, 2.5, 2.667, 3.0],
+    chromatic: [1.0, 1.059, 1.122, 1.189, 1.26, 1.335, 1.414, 1.498, 1.587, 1.682, 1.782, 1.888, 2.0],
+    whole: [1.0, 1.122, 1.26, 1.414, 1.587, 1.782, 2.0, 2.244, 2.52, 2.828, 3.174, 3.564, 4.0]
+};
+
+const noteNamesMap = {
+    pentatonic: ['A', 'C', 'D', 'E', 'G', 'A', 'C', 'D', 'E', 'G', 'A'],
+    major: ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#', 'A', 'B', 'C#', 'D', 'E'],
+    chromatic: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A'],
+    whole: ['A', 'B', 'C#', 'D#', 'F', 'G', 'A', 'B', 'C#', 'D#', 'F', 'G', 'A']
+};
+
+document.getElementById('more-btn').addEventListener('click', function() {
+    let panel = document.getElementById('hidden-section');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'flex';
+        this.innerText = '[ LESS SETTINGS ]';
+    } else {
+        panel.style.display = 'none';
+        this.innerText = '[ MORE SETTINGS ]';
+    }
+});
+
+document.getElementById('scale-type').addEventListener('change', drawScaleVisualizer);
+
+document.getElementById('start-btn').addEventListener('click', function() {
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        initEngine();
+        initMidi();
+        drawScaleVisualizer();
+        initSurfaceAnimationLoop(); 
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('interface').style.display = 'block';
+        document.getElementById('status-text').style.color = "#ffffff";
+        document.getElementById('status-text').innerText = "ONLINE";
+    } catch(err) {
+        document.getElementById('status-text').innerText = "CRASH LOG: " + err.message;
+    }
+});
+
+function drawScaleVisualizer() {
+    const group = document.getElementById('note-labels-group');
+    group.innerHTML = ''; 
+    const chosenScale = document.getElementById('scale-type').value;
+    const names = noteNamesMap[chosenScale];
+    const verticalNames = [...names].reverse();
+    
+    verticalNames.forEach((name, i) => {
+        let yPos = (i / (verticalNames.length - 1)) * 190 + 15;
+        let textNode = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textNode.setAttribute("x", "20");
+        textNode.setAttribute("y", yPos + 4);
+        textNode.setAttribute("fill", "#333333");
+        textNode.setAttribute("font-size", "12px");
+        textNode.setAttribute("font-family", "monospace");
+        textNode.setAttribute("text-anchor", "middle");
+        textNode.textContent = name;
+        let originalIndex = (verticalNames.length - 1) - i;
+        textNode.id = `viz-lbl-${originalIndex}`;
+        group.appendChild(textNode);
+    });
+}
+
+function initSurfaceAnimationLoop() {
+    for (let i = 0; i < maxSurfacePoints; i++) {
+        surfaceDataHistory.push(205);
+    }
+
+    function renderFrame() {
+        surfaceDataHistory.shift();
+        surfaceDataHistory.push(currentYTarget);
+
+        let pathString = "";
+        surfaceDataHistory.forEach((yVal, index) => {
+            let xVal = 80 + (index / (maxSurfacePoints - 1)) * 260;
+            if (index === 0) pathString += `M ${xVal} ${yVal}`;
+            else pathString += ` L ${xVal} ${yVal}`;
+        });
+
+        document.getElementById('surface-path').setAttribute("d", pathString);
+        
+        let tipY = surfaceDataHistory[0];
+        let bodyY = 110 + (tipY - 110) * 0.61; 
+        
+        document.getElementById('needle-body').setAttribute("y2", bodyY);
+        document.getElementById('needle-cantilever').setAttribute("y1", bodyY);
+        document.getElementById('needle-cantilever').setAttribute("y2", tipY);
+        document.getElementById('needle-diamond').setAttribute("points", `80,${tipY} 75,${tipY-10} 85,${tipY-10}`);
+
+        requestAnimationFrame(renderFrame);
+    }
+    requestAnimationFrame(renderFrame);
+}
+
+function initEngine() {
+    const now = audioCtx.currentTime;
+
+    oscMelody = audioCtx.createOscillator();
+    oscMelody.type = document.getElementById('mel-wave').value;
+    baseFrequency = parseFloat(document.getElementById('pitch-ctrl').value);
+    oscMelody.frequency.setValueAtTime(baseFrequency, now);
+    
+    fmModulator = audioCtx.createOscillator();
+    fmModulator.type = 'sine';
+    let multiplier = parseFloat(document.getElementById('harm-ctrl').value);
+    fmModulator.frequency.setValueAtTime(baseFrequency * multiplier, now);
+    
+    fmGain = audioCtx.createGain();
+    fmGain.gain.setValueAtTime(0, now);
+    
+    melodyGain = audioCtx.createGain();
+    let initialMelVol = parseFloat(document.getElementById('melvol-ctrl').value) / 100;
+    melodyGain.gain.setValueAtTime(initialMelVol * 0.5, now);
+
+    oscTexture = audioCtx.createOscillator();
+    oscTexture.type = document.getElementById('wave-type').value;
+    oscTexture.frequency.setValueAtTime(baseFrequency * 0.75, now);
+    
+    textureFilter = audioCtx.createBiquadFilter();
+    textureFilter.type = 'bandpass';
+    textureFilter.Q.setValueAtTime(parseFloat(document.getElementById('q-ctrl').value), now);
+    textureFilter.frequency.setValueAtTime(parseFloat(document.getElementById('filt-ctrl').value), now);
+    
+    textureGain = audioCtx.createGain();
+    textureGain.gain.setValueAtTime(0, now);
+
+    bassEQ = audioCtx.createBiquadFilter();
+    bassEQ.type = 'lowshelf';
+    bassEQ.frequency.setValueAtTime(250, now);
+    bassEQ.gain.setValueAtTime(parseFloat(document.getElementById('bass-ctrl').value), now);
+
+    trebleEQ = audioCtx.createBiquadFilter();
+    trebleEQ.type = 'highshelf';
+    trebleEQ.frequency.setValueAtTime(2500, now);
+    trebleEQ.gain.setValueAtTime(parseFloat(document.getElementById('treble-ctrl').value), now);
+
+    masterVolume = audioCtx.createGain();
+    masterVolume.gain.setValueAtTime(0.6, now);
+
+    fmModulator.connect(fmGain);
+    fmGain.connect(oscMelody.frequency);
+    oscMelody.connect(melodyGain);
+    melodyGain.connect(bassEQ);
+
+    oscTexture.connect(textureFilter);
+    textureFilter.connect(textureGain);
+    textureGain.connect(bassEQ);
+    
+    bassEQ.connect(trebleEQ);
+    trebleEQ.connect(masterVolume);
+    masterVolume.connect(audioCtx.destination);
+    
+    oscMelody.start();
+    fmModulator.start();
+    oscTexture.start();
+
+    document.getElementById('wave-type').onchange = function(e) { oscTexture.type = e.target.value; };
+    document.getElementById('mel-wave').onchange = function(e) { oscMelody.type = e.target.value; };
+    
+    document.getElementById('pitch-ctrl').oninput = function(e) {
+        baseFrequency = parseFloat(e.target.value);
+        let mult = parseFloat(document.getElementById('harm-ctrl').value);
+        let t = audioCtx.currentTime;
+        oscMelody.frequency.setTargetAtTime(baseFrequency, t, 0.01);
+        fmModulator.frequency.setTargetAtTime(baseFrequency * mult, t, 0.01);
+        oscTexture.frequency.setTargetAtTime(baseFrequency * 0.75, t, 0.01);
+        document.getElementById('pitch-val').innerText = e.target.value;
+        drawScaleVisualizer();
+    };
+    document.getElementById('harm-ctrl').oninput = function(e) {
+        let mult = parseFloat(e.target.value);
+        fmModulator.frequency.setTargetAtTime(baseFrequency * mult, audioCtx.currentTime, 0.01);
+        document.getElementById('harm-val').innerText = mult.toFixed(1) + "x";
+    };
+    
+    document.getElementById('curve-ctrl').oninput = function(e) { document.getElementById('curve-val').innerText = parseFloat(e.target.value).toFixed(1) + "x"; };
+    document.getElementById('fm-ctrl').oninput = function(e) { document.getElementById('fm-val').innerText = e.target.value; };
+    document.getElementById('filt-ctrl').oninput = function(e) { document.getElementById('filt-val').innerText = e.target.value; };
+    document.getElementById('q-ctrl').oninput = function(e) { document.getElementById('q-val').innerText = e.target.value; };
+    document.getElementById('melvol-ctrl').oninput = function(e) { document.getElementById('melvol-val').innerText = e.target.value + "%"; };
+    document.getElementById('gritvol-ctrl').oninput = function(e) { document.getElementById('gritvol-val').innerText = e.target.value + "%"; };
+    document.getElementById('sens-ctrl').oninput = function(e) { document.getElementById('sens-val').innerText = e.target.value + "x"; };
+    document.getElementById('linger-ctrl').oninput = function(e) { document.getElementById('linger-val').innerText = e.target.value + "ms"; };
+    document.getElementById('fmax-ctrl').oninput = function(e) { document.getElementById('fmax-val').innerText = e.target.value; };
+    document.getElementById('qmax-ctrl').oninput = function(e) { document.getElementById('qmax-val').innerText = e.target.value; };
+    document.getElementById('rate-ctrl').oninput = function(e) {
+        let val = parseFloat(e.target.value);
+        timeConstant = val / 1000;
+        document.getElementById('rate-val').innerText = val + "ms";
+    };
+    document.getElementById('bass-ctrl').oninput = function(e) { bassEQ.gain.setTargetAtTime(parseFloat(e.target.value), audioCtx.currentTime, 0.01); document.getElementById('bass-val').innerText = e.target.value; };
+    document.getElementById('treble-ctrl').oninput = function(e) { trebleEQ.gain.setTargetAtTime(parseFloat(e.target.value), audioCtx.currentTime, 0.01); document.getElementById('treble-val').innerText = e.target.value; };
+}
+
+function initMidi() {
+    if (navigator.requestMIDIAccess) {
+        navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+    } else {
+        document.getElementById('status-text').innerText = "API Unsupported";
+    }
+}
+
+function onMIDISuccess(midiAccess) {
+    const inputs = midiAccess.inputs.values();
+    const firstInput = inputs.next().value;
+    if (firstInput) {
+        firstInput.onmidimessage = handleMidi;
+        document.getElementById('status-text').innerText = "CONNECTED: " + firstInput.name.toUpperCase();
+    } else {
+        document.getElementById('status-text').innerText = "AWAITING USB DEVICE";
+    }
+}
+
+function onMIDIFailure() { document.getElementById('status-text').innerText = "Access Denied"; }
+
+function handleMidi(msg) {
+    const cmd = msg.data[0] & 0xf0;
+    const ccNum = msg.data[1];
+    const ccVal = msg.data[2];
+
+    if (cmd === 176 && ccNum === 11) {
+        document.getElementById('cc-val').innerText = ccVal;
+
+        if (audioCtx) {
+            if (audioCtx.state === "suspended") { audioCtx.resume(); }
+
+            const targetTime = audioCtx.currentTime + 0.01;
+
+            let sensitivity = parseFloat(document.getElementById('sens-ctrl').value);
+            let curveExponent = parseFloat(document.getElementById('curve-ctrl').value);
+            let melBaseVol = parseFloat(document.getElementById('melvol-ctrl').value) / 100;
+            let gritMaxVol = parseFloat(document.getElementById('gritvol-ctrl').value) / 100;
+            let maxFm = parseFloat(document.getElementById('fm-ctrl').value);
+            let baseFilt = parseFloat(document.getElementById('filt-ctrl').value);
+            let baseQ = parseFloat(document.getElementById('q-ctrl').value);
+            let mult = parseFloat(document.getElementById('harm-ctrl').value);
+            
+            let maxFiltOpen = parseFloat(document.getElementById('fmax-ctrl').value);
+            let maxQExpansion = parseFloat(document.getElementById('qmax-ctrl').value);
+            let chosenScaleKey = document.getElementById('scale-type').value;
+            let lingerThreshold = parseFloat(document.getElementById('linger-ctrl').value);
+
+            let normalized = (ccVal / 127) * sensitivity;
+            if (normalized > 1) normalized = 1;
+
+            normalized = Math.pow(normalized, curveExponent);
+
+            let activeScale = scales[chosenScaleKey];
+            let stepIndex = Math.min(Math.floor(normalized * activeScale.length), activeScale.length - 1);
+            
+            let currentTimeMs = performance.now();
+            
+            if (stepIndex !== lastRegisteredStepIndex) {
+                if (currentTimeMs - lastNoteUpdateTime >= lingerThreshold) {
+                    lastRegisteredStepIndex = stepIndex;
+                    lastNoteUpdateTime = currentTimeMs;
+                } else {
+                    stepIndex = lastRegisteredStepIndex;
+                }
+            }
+
+            if(stepIndex < 0) stepIndex = 0;
+
+            let totalSteps = activeScale.length;
+            currentYTarget = 205 - (stepIndex / (totalSteps - 1)) * 190;
+            
+            activeScale.forEach((_, idx) => {
+                let textLbl = document.getElementById(`viz-lbl-${idx}`);
+                if(textLbl) {
+                    if(idx === stepIndex) {
+                        textLbl.setAttribute("fill", "#ffffff");
+                        textLbl.setAttribute("font-weight", "bold");
+                    } else {
+                        textLbl.setAttribute("fill", "#333333");
+                        textLbl.setAttribute("font-weight", "normal");
+                    }
+                }
+            });
+
+            let scaleRatio = activeScale[stepIndex] || 1.0;
+            let finalFreq = baseFrequency * scaleRatio;
+
+            document.getElementById('debug-note').innerText = `Step ${stepIndex + 1} (${Math.round(finalFreq)} Hz)`;
+
+            oscMelody.frequency.setTargetAtTime(finalFreq, targetTime, timeConstant);
+            fmModulator.frequency.setTargetAtTime(finalFreq * mult, targetTime, timeConstant);
+            fmGain.gain.setTargetAtTime(normalized * maxFm, targetTime, timeConstant);
+
+            let dynamicFilterTarget = baseFilt + (normalized * maxFiltOpen);
+            textureFilter.frequency.setTargetAtTime(dynamicFilterTarget, targetTime, timeConstant);
+            textureFilter.Q.setTargetAtTime(baseQ + (normalized * maxQExpansion), targetTime, timeConstant);
+
+            let dynamicMelodyVol = (melBaseVol * 0.5) + (normalized * (1 - melBaseVol) * 0.5);
+            melodyGain.gain.setTargetAtTime(dynamicMelodyVol, targetTime, timeConstant);
+            textureGain.gain.setTargetAtTime(normalized * gritMaxVol * 0.5, targetTime, timeConstant);
+        }
+    }
+}
+</script>
+
+</body>
+</html>
