@@ -13,37 +13,24 @@
         body {
             margin: 20px;
             padding: 0;
-            overflow-x: hidden;
-        }
-        h2 {
-            margin: 0 0 10px 0;
-            font-weight: normal;
-        }
-        hr {
-            border: none;
-            border-top: 1px dashed #ffffff;
-            margin: 20px 0;
         }
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         label {
-            display: block;
-            margin-bottom: 5px;
+            flex: 1;
         }
         select, input[type="range"], button {
-            width: 100%;
+            width: 250px;
             border: 1px solid #ffffff;
-            padding: 5px;
+            padding: 4px;
             background: #000000;
             color: #ffffff;
             font-family: monospace;
@@ -51,43 +38,41 @@
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
-            height: 15px;
+            height: 12px;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 10px;
-            height: 15px;
+            width: 8px;
+            height: 12px;
             background: #ffffff;
             cursor: pointer;
-            border: 1px solid #000000;
         }
         button {
+            width: 100%;
             cursor: pointer;
-            font-weight: bold;
-            padding: 10px;
+            margin-bottom: 15px;
         }
         button:active {
             background: #ffffff;
             color: #000000;
         }
+        .visualizer-box {
+            border: 1px solid #ffffff;
+            padding: 10px;
+            margin: 15px 0;
+        }
         .hidden-panel {
             display: none;
             flex-direction: column;
-            gap: 15px;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px dashed #ffffff;
         }
-        .visualizer-box {
-            background: #000000;
-            border: 1px solid #ffffff;
-            padding: 10px;
-            margin: 20px 0;
-            position: relative;
-        }
-        span.value-display {
-            float: right;
+        .readout-line {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -96,136 +81,128 @@
 <div class="container">
     <h2>TEXTURE INSTRUMENT TEST</h2>
     
-    <div>STATUS: <span id="status-text">Awaiting Initialization...</span></div>
+    <div class="control-group">
+        <label>STATUS:</label>
+        <span id="status-text" style="width: 250px;">Awaiting Initialization...</span>
+    </div>
+    
     <button id="start-btn">[ INITIALIZE ]</button>
     
     <div id="interface" style="display:none;">
-        <div class="grid">
-            <div>
-                <div class="control-group">
-                    <label for="scale-type">Target Scale:</label>
-                    <select id="scale-type">
-                        <option value="pentatonic">Minor Pentatonic</option>
-                        <option value="major">Major Scale</option>
-                        <option value="chromatic">Chromatic Scale</option>
-                        <option value="whole">Whole Tone (Dreamy/Eerie)</option>
-                    </select>
-                </div>
+        <div class="control-group">
+            <label for="scale-type">Target Scale:</label>
+            <select id="scale-type">
+                <option value="pentatonic">Minor Pentatonic</option>
+                <option value="major">Major Scale</option>
+                <option value="chromatic">Chromatic Scale</option>
+                <option value="whole">Whole Tone (Dreamy/Eerie)</option>
+            </select>
+        </div>
 
-                <div class="control-group">
-                    <label for="mel-wave">Melody Waveform:</label>
-                    <select id="mel-wave">
-                        <option value="sine">Sine</option>
-                        <option value="triangle">Triangle</option>
-                        <option value="sawtooth">Sawtooth</option>
-                        <option value="square">Square</option>
-                    </select>
-                </div>
+        <div class="control-group">
+            <label for="mel-wave">Melody Waveform:</label>
+            <select id="mel-wave">
+                <option value="sine">Sine</option>
+                <option value="triangle">Triangle</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="square">Square</option>
+            </select>
+        </div>
 
-                <div class="control-group">
-                    <label for="wave-type">Grit Waveform:</label>
-                    <select id="wave-type">
-                        <option value="sawtooth">Sawtooth</option>
-                        <option value="square">Square</option>
-                        <option value="triangle">Triangle</option>
-                    </select>
-                </div>
+        <div class="control-group">
+            <label for="wave-type">Grit Waveform:</label>
+            <select id="wave-type">
+                <option value="sawtooth">Sawtooth</option>
+                <option value="square">Square</option>
+                <option value="triangle">Triangle</option>
+            </select>
+        </div>
 
-                <div class="control-group">
-                    <label for="pitch-ctrl">Base Pitch (Hz): <span class="value-display" id="pitch-val">110</span></label>
-                    <input type="range" id="pitch-ctrl" min="40" max="440" value="110" step="1">
-                </div>
-            </div>
+        <div class="control-group">
+            <label for="pitch-ctrl">Base Pitch (Hz): <span id="pitch-val">110</span></label>
+            <input type="range" id="pitch-ctrl" min="40" max="440" value="110" step="1">
+        </div>
 
-            <div>
-                <div class="control-group">
-                    <label for="sens-ctrl">Input Sensitivity: <span class="value-display" id="sens-val">1x</span></label>
-                    <input type="range" id="sens-ctrl" min="1" max="10" value="1" step="0.5">
-                </div>
+        <div class="control-group">
+            <label for="sens-ctrl">Input Sensitivity: <span id="sens-val">1.0x</span></label>
+            <input type="range" id="sens-ctrl" min="1" max="3" value="1.0" step="0.1">
+        </div>
 
-                <div class="control-group">
-                    <label for="curve-ctrl">Surface Curve (Exp): <span class="value-display" id="curve-val">3.0x</span></label>
-                    <input type="range" id="curve-ctrl" min="1" max="5" value="3" step="0.5">
-                </div>
+        <div class="control-group">
+            <label for="curve-ctrl">Surface Curve (Exp): <span id="curve-val">3.0x</span></label>
+            <input type="range" id="curve-ctrl" min="1" max="5" value="3" step="0.5">
+        </div>
 
-                <div class="control-group">
-                    <label for="linger-ctrl">Note Linger Time (Speed): <span class="value-display" id="linger-val">110ms</span></label>
-                    <input type="range" id="linger-ctrl" min="10" max="800" value="110" step="10">
-                </div>
-            </div>
+        <div class="control-group">
+            <label for="linger-ctrl">Note Linger Time: <span id="linger-val">110ms</span></label>
+            <input type="range" id="linger-ctrl" min="10" max="800" value="110" step="10">
         </div>
 
         <div class="visualizer-box">
-            <svg id="viz-svg" width="100%" height="220" style="display:block; overflow:visible; background: #000000;">
+            <svg id="viz-svg" width="100%" height="220" style="display:block; overflow:visible;">
                 <g id="note-labels-group"></g>
                 <path id="surface-path" d="" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 2" />
                 <g id="needle-arm-group">
-                    <line id="needle-body" x1="340" y1="110" x2="160" y2="110" stroke="#ffffff" stroke-width="4" />
-                    <line id="needle-cantilever" x1="160" y1="110" x2="80" y2="120" stroke="#ffffff" stroke-width="2" />
-                    <polygon id="needle-diamond" points="80,120 76,110 84,110" fill="#ffffff" stroke="#ffffff" stroke-width="1" />
-                    <circle cx="340" cy="110" r="5" fill="#000000" stroke="#ffffff" stroke-width="2" />
+                    <line id="needle-body" x1="550" y1="15" x2="270" y2="110" stroke="#ffffff" stroke-width="4" />
+                    <line id="needle-cantilever" x1="270" y1="110" x2="80" y2="120" stroke="#ffffff" stroke-width="2" />
+                    <polygon id="needle-diamond" points="80,120 75,110 85,110" fill="#ffffff" stroke="#ffffff" stroke-width="1" />
+                    <circle cx="550" cy="15" r="5" fill="#000000" stroke="#ffffff" stroke-width="2" />
                 </g>
             </svg>
         </div>
 
-        <div class="grid">
+        <div class="readout-line">
             <div>MIDI Value: <span id="cc-val">0</span></div>
-            <div style="text-align: right;">Active Pitch Step: <span id="debug-note">Baseline Tone</span></div>
+            <div>Active Pitch Step: <span id="debug-note">Baseline Tone</span></div>
         </div>
 
-        <br>
+        <span style="display:block; margin-top:15px;"></span>
         <button id="more-btn" type="button">[ MORE SETTINGS ]</button>
 
         <div id="hidden-section" class="hidden-panel">
-            <div class="grid">
-                <div>
-                    <div class="control-group">
-                        <label for="rate-ctrl">Check-In Rate (Smoothing): <span class="value-display" id="rate-val">5ms</span></label>
-                        <input type="range" id="rate-ctrl" min="1" max="20" value="5" step="1">
-                    </div>
-                    <div class="control-group">
-                        <label for="fm-ctrl">FM Intensity Max: <span class="value-display" id="fm-val">1000</span></label>
-                        <input type="range" id="fm-ctrl" min="0" max="3000" value="1000" step="50">
-                    </div>
-                    <div class="control-group">
-                        <label for="harm-ctrl">Harmonic Multiplier: <span class="value-display" id="harm-val">2.0x</span></label>
-                        <input type="range" id="harm-ctrl" min="1" max="12" value="2" step="0.5">
-                    </div>
-                    <div class="control-group">
-                        <label for="filt-ctrl">Filter Baseline (Hz): <span class="value-display" id="filt-val">150</span></label>
-                        <input type="range" id="filt-ctrl" min="50" max="1000" value="150" step="10">
-                    </div>
-                    <div class="control-group">
-                        <label for="q-ctrl">Filter Sharpness (Q): <span class="value-display" id="q-val">2</span></label>
-                        <input type="range" id="q-ctrl" min="1" max="30" value="2" step="1">
-                    </div>
-                </div>
-                <div>
-                    <div class="control-group">
-                        <label for="melvol-ctrl">Melody Baseline Volume: <span class="value-display" id="melvol-val">30%</span></label>
-                        <input type="range" id="melvol-ctrl" min="0" max="100" value="30">
-                    </div>
-                    <div class="control-group">
-                        <label for="gritvol-ctrl">Grit Max Volume: <span class="value-display" id="gritvol-val">50%</span></label>
-                        <input type="range" id="gritvol-ctrl" min="0" max="100" value="50">
-                    </div>
-                    <div class="control-group">
-                        <label for="bass-ctrl">Bass Gain (dB): <span class="value-display" id="bass-val">0</span></label>
-                        <input type="range" id="bass-ctrl" min="-12" max="12" value="0" step="1">
-                    </div>
-                    <div class="control-group">
-                        <label for="treble-ctrl">Treble Gain (dB): <span class="value-display" id="treble-val">0</span></label>
-                        <input type="range" id="treble-ctrl" min="-12" max="12" value="0" step="1">
-                    </div>
-                    <div class="control-group">
-                        <label for="fmax-ctrl">Max Needle Filter Opening (Hz): <span class="value-display" id="fmax-val">6000</span></label>
-                        <input type="range" id="fmax-ctrl" min="1000" max="8000" value="6000" step="500">
-                    </div>
-                    <div class="control-group">
-                        <label for="qmax-ctrl">Max Needle Q Expansion: <span class="value-display" id="qmax-val">25</span></label>
-                        <input type="range" id="qmax-ctrl" min="0" max="40" value="25" step="1">
-                    </div>
-                </div>
+            <div class="control-group">
+                <label for="rate-ctrl">Check-In Rate: <span id="rate-val">5ms</span></label>
+                <input type="range" id="rate-ctrl" min="1" max="20" value="5" step="1">
+            </div>
+            <div class="control-group">
+                <label for="fm-ctrl">FM Intensity Max: <span id="fm-val">1000</span></label>
+                <input type="range" id="fm-ctrl" min="0" max="3000" value="1000" step="50">
+            </div>
+            <div class="control-group">
+                <label for="harm-ctrl">Harmonic Multiplier: <span id="harm-val">2.0x</span></label>
+                <input type="range" id="harm-ctrl" min="1" max="12" value="2" step="0.5">
+            </div>
+            <div class="control-group">
+                <label for="filt-ctrl">Filter Baseline (Hz): <span id="filt-val">150</span></label>
+                <input type="range" id="filt-ctrl" min="50" max="1000" value="150" step="10">
+            </div>
+            <div class="control-group">
+                <label for="q-ctrl">Filter Sharpness (Q): <span id="q-val">2</span></label>
+                <input type="range" id="q-ctrl" min="1" max="30" value="2" step="1">
+            </div>
+            <div class="control-group">
+                <label for="melvol-ctrl">Melody Baseline Volume: <span id="melvol-val">30%</span></label>
+                <input type="range" id="melvol-ctrl" min="0" max="100" value="30">
+            </div>
+            <div class="control-group">
+                <label for="gritvol-ctrl">Grit Max Volume: <span id="gritvol-val">50%</span></label>
+                <input type="range" id="gritvol-ctrl" min="0" max="100" value="50">
+            </div>
+            <div class="control-group">
+                <label for="bass-ctrl">Bass Gain (dB): <span id="bass-val">0</span></label>
+                <input type="range" id="bass-ctrl" min="-12" max="12" value="0" step="1">
+            </div>
+            <div class="control-group">
+                <label for="treble-ctrl">Treble Gain (dB): <span id="treble-val">0</span></label>
+                <input type="range" id="treble-ctrl" min="-12" max="12" value="0" step="1">
+            </div>
+            <div class="control-group">
+                <label for="fmax-ctrl">Max Needle Filter (Hz): <span id="fmax-val">6000</span></label>
+                <input type="range" id="fmax-ctrl" min="1000" max="8000" value="6000" step="500">
+            </div>
+            <div class="control-group">
+                <label for="qmax-ctrl">Max Needle Q Expansion: <span id="qmax-val">25</span></label>
+                <input type="range" id="qmax-ctrl" min="0" max="40" value="25" step="1">
             </div>
         </div>
     </div>
@@ -282,7 +259,6 @@ document.getElementById('start-btn').addEventListener('click', function() {
         initSurfaceAnimationLoop(); 
         document.getElementById('start-btn').style.display = 'none';
         document.getElementById('interface').style.display = 'block';
-        document.getElementById('status-text').style.color = "#ffffff";
         document.getElementById('status-text').innerText = "ONLINE";
     } catch(err) {
         document.getElementById('status-text').innerText = "CRASH LOG: " + err.message;
@@ -323,7 +299,7 @@ function initSurfaceAnimationLoop() {
 
         let pathString = "";
         surfaceDataHistory.forEach((yVal, index) => {
-            let xVal = 80 + (index / (maxSurfacePoints - 1)) * 260;
+            let xVal = 80 + (index / (maxSurfacePoints - 1)) * 470;
             if (index === 0) pathString += `M ${xVal} ${yVal}`;
             else pathString += ` L ${xVal} ${yVal}`;
         });
@@ -331,12 +307,14 @@ function initSurfaceAnimationLoop() {
         document.getElementById('surface-path').setAttribute("d", pathString);
         
         let tipY = surfaceDataHistory[0];
-        let bodyY = 110 + (tipY - 110) * 0.61; 
+        // Calculate the trailing mid-joint based on a fixed top-right pivot geometry (550, 15)
+        let bodyY = 15 + (tipY - 15) * 0.40; 
         
         document.getElementById('needle-body').setAttribute("y2", bodyY);
         document.getElementById('needle-cantilever').setAttribute("y1", bodyY);
         document.getElementById('needle-cantilever').setAttribute("y2", tipY);
-        document.getElementById('needle-diamond').setAttribute("points", `80,${tipY} 75,${tipY-10} 85,${tipY-10}`);
+        // Diamond point geometry maps apex at exactly (80, tipY) to track the data line natively
+        document.getElementById('needle-diamond').setAttribute("points", `80,${tipY} 74,${tipY-12} 86,${tipY-12}`);
 
         requestAnimationFrame(renderFrame);
     }
@@ -430,7 +408,7 @@ function initEngine() {
     document.getElementById('q-ctrl').oninput = function(e) { document.getElementById('q-val').innerText = e.target.value; };
     document.getElementById('melvol-ctrl').oninput = function(e) { document.getElementById('melvol-val').innerText = e.target.value + "%"; };
     document.getElementById('gritvol-ctrl').oninput = function(e) { document.getElementById('gritvol-val').innerText = e.target.value + "%"; };
-    document.getElementById('sens-ctrl').oninput = function(e) { document.getElementById('sens-val').innerText = e.target.value + "x"; };
+    document.getElementById('sens-ctrl').oninput = function(e) { document.getElementById('sens-val').innerText = parseFloat(e.target.value).toFixed(1) + "x"; };
     document.getElementById('linger-ctrl').oninput = function(e) { document.getElementById('linger-val').innerText = e.target.value + "ms"; };
     document.getElementById('fmax-ctrl').oninput = function(e) { document.getElementById('fmax-val').innerText = e.target.value; };
     document.getElementById('qmax-ctrl').oninput = function(e) { document.getElementById('qmax-val').innerText = e.target.value; };
